@@ -12,16 +12,16 @@ public abstract class FlareGame:IDisposable
 {
     protected readonly WindowOptions WindowOptions;
     protected readonly IWindow Window;
-    protected IGraphicsDevice GraphicsDevice;
-    protected IRenderer Renderer;
+   
     protected bool ExitOnEscape = true;
-    protected ImGuiController ImGuiController;
+    protected IGraphicsDevice GraphicsDevice = null!;
+    protected ImGuiController ImGuiController = null!;
+    
     protected FlareGame(string title, int width, int height) : this(WindowOptions.Default with
     {
-        Size = new Vector2D<int>(width, height), Title = title
+        Size = new Vector2D<int>(width, height), Title = title, FramesPerSecond = 60
     })
     {
-        
     }
     protected FlareGame(WindowOptions windowOptions)
     {
@@ -39,7 +39,7 @@ public abstract class FlareGame:IDisposable
     
     private void OnFrameBufferResize(Vector2D<int> newSize)
     {
-       Renderer.Viewport = new Rectangle(0, 0, newSize.X, newSize.Y);
+       GraphicsDevice.Viewport = new Rectangle(0, 0, newSize.X, newSize.Y);
     }
     private void FlareInit()
     {
@@ -47,7 +47,6 @@ public abstract class FlareGame:IDisposable
         Input.InitializeInput(inputContext);
         GL gl = Window.CreateOpenGL();
         GraphicsDevice = new OpenGLGraphicsDevice(gl);
-        Renderer = new OpenGLRenderer(gl);
         ImGuiController = new ImGuiController(gl, Silk.NET.Windowing.Window.GetView(),inputContext);
         Initialize();
         
@@ -55,6 +54,8 @@ public abstract class FlareGame:IDisposable
     
     private void FlareDestroy()
     {
+        ImGuiController.Dispose();
+        GraphicsDevice.Dispose();
         Input.Dispose();
         Destroy();
     }
