@@ -8,14 +8,14 @@ namespace Flare.Rendering;
 
 public class FlareRenderer : IDisposable
 {
-    private int _flushCount ;
+    private int _flushCount;
     public int FlushPerFrame { get; private set; }
     public IGraphicsDevice GraphicsDevice { get; private set; }
     public bool DrawWireFrame;
     private VertexArrayObject<Vertex> _vao;
     private BufferObject<Vertex> _vbo;
     private BufferObject<uint> _ebo;
-    
+
     private Matrix4x4 DefaultTransform => Matrix4x4.CreateOrthographicOffCenter(0, GraphicsDevice.Viewport.Width,
         GraphicsDevice.Viewport.Height, 0, 0, 1);
 
@@ -33,7 +33,7 @@ public class FlareRenderer : IDisposable
     private Shader _defaultShader;
     private Shader _currentShader;
     private Texture _defaultTexture;
-    private Texture  _currentTexture;
+    private Texture _currentTexture;
     private readonly List<Texture> _textureSlots = new List<Texture>(MAX_TEXTURE_SLOTS);
 
     #endregion
@@ -107,28 +107,28 @@ public class FlareRenderer : IDisposable
         _vao = GraphicsDevice.CreateVao(ref _vbo, ref _ebo);
         Vertex.SetupVertexAttribPtr(ref _vao, GraphicsDevice);
 
-       
+
         TextureConfig defaultTextureConfig = new TextureConfig();
         _defaultTexture = GraphicsDevice.CreateTexture(1, 1, [255, 255, 255, 255], ref defaultTextureConfig);
-       
+
         _textureSlots.Add(_defaultTexture);
-        
+
         _defaultShader = GraphicsDevice.CreateShader(DEFAULT_V_SHADER, DEFAULT_F_SHADER);
         ChangeShader(ref _defaultShader);
-        
+
         graphicsDevice.SetShaderUniform(ref _defaultShader, "transform", DefaultTransform);
 
         Logger.LogInfo("Created sprite batch");
     }
 
+    #region RenderingBackend
+
     public void Begin()
     {
         ClearBuffers();
-       
+
         ChangeShader(ref _defaultShader);
         GraphicsDevice.SetShaderUniform(ref _defaultShader, "transform", DefaultTransform);
-       
-        
     }
 
     public void End()
@@ -180,75 +180,36 @@ public class FlareRenderer : IDisposable
         GraphicsDevice.SetShaderUniform(ref _defaultShader, "transform", DefaultTransform);
     }
 
-    private Vector4 ColorToVector4(Color color)
-    {
-        return new Vector4(color.R, color.G, color.B, color.A) / 255f;
-    }
+    #endregion
 
-    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color,
-        Vector2 minTexCoords,
-        Vector2 maxTexCoords, int slot,Vector3 normal)
-    {
-        data[0] = new Vertex(position, ColorToVector4(color[0]),
-            new Vector2(minTexCoords.X, maxTexCoords.Y), slot,normal);
 
-        data[1] = new Vertex(position with { X = position.X + size.X }, ColorToVector4(color[1]),
-            new Vector2(maxTexCoords.X, maxTexCoords.Y), slot,normal);
+    #region DrawTexture
 
-        data[2] = new Vertex(position with { Y = position.Y + size.Y }, ColorToVector4(color[2]),
-            new Vector2(minTexCoords.X, minTexCoords.Y), slot,normal);
-
-        data[3] = new Vertex(position + size.AsVector3(), ColorToVector4(color[3]),
-            new Vector2(maxTexCoords.X, minTexCoords.Y), slot,normal);
-    }
-
-    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color,
-        Vector2 minTexCoords,
-        Vector2 maxTexCoords, int slot)
-    {
-        GenerateQuadVertices(data, position, size, color, minTexCoords, maxTexCoords,
-            slot,new Vector3(0, 0, 1));
-    }
-
-    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color, Vector3 normal)
-    {
-        GenerateQuadVertices(data, position, size, color, Vector2.Zero, Vector2.One, 0,normal);
-    }
-
-    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color)
-    {
-        GenerateQuadVertices(data, position, size, color, new Vector3(0, 0, 1));
-    }
-
-    public void DrawTexture(Texture texture, Vector2 position, float scale = 1, Color tintColor = default,
-        Rectangle? sourceRect = null)
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor,
+        Vector2 origin, Vector2 scale, float rotation, bool invertHorizontal, bool invertVertical)
     {
         int slot = GetTextureSlot(ref texture);
-    
-       
+        
         EnsureBounds(QUAD_VERTEX_COUNT, QUAD_INDICES_COUNT);
         Color color = tintColor == default ? Color.White : tintColor;
-        float uMin = 0f, vMin = 0f;
-        float uMax = 1f, vMax = 1f;
-
-        if (sourceRect.HasValue)
-        {
-            Rectangle srcRect = sourceRect.Value;
-            uMin = (float)srcRect.X / texture.Width;
-            vMin = (float)(texture.Height - srcRect.Y - srcRect.Height) / texture.Height;
-            uMax = (float)(srcRect.X + srcRect.Width) / texture.Width;
-            vMax = (float)(texture.Height - srcRect.Y) / texture.Height;
-        }
-
        
+        float uMin = (float)sourceRect.X / texture.Width;
+        float vMin = (float)(texture.Height - sourceRect.Y - sourceRect.Height) / texture.Height;
+        float uMax = (float)(sourceRect.X + sourceRect.Width) / texture.Width;
+        float vMax = (float)(texture.Height - sourceRect.Y) / texture.Height;
 
-        float width = texture.Width * scale;
-        float height = texture.Height * scale;
-        if (sourceRect.HasValue)
+        if (invertHorizontal)
         {
-            width = sourceRect.Value.Width * scale;
-            height = sourceRect.Value.Height * scale;
+            (uMin, uMax) = (uMax, uMin);
         }
+
+        if (invertVertical)
+        {
+            (vMin, vMax) = (vMax, vMin);
+        }
+
+        float width = sourceRect.Width * scale.X;
+        float height = sourceRect.Height * scale.Y;
 
 
         uint startingIndex = (uint)_currentVertexIndex;
@@ -257,10 +218,16 @@ public class FlareRenderer : IDisposable
         GenerateQuadVertices(data, position.AsVector3(), new Vector2(width, height),
             [color, color, color, color],
             new Vector2(uMin, vMin),
-            new Vector2(uMax, vMax),slot);
-        
+            new Vector2(uMax, vMax), slot);
+        origin *= scale;
+        Matrix4x4 transformationMatrix =
+            Matrix4x4.CreateRotationZ(-rotation, position.AsVector3() + origin.AsVector3());
         for (int i = 0; i < QUAD_VERTEX_COUNT; i++)
+        {
+            data[i].Position = Vector3.Transform(data[i].Position, transformationMatrix);
             _vertices[_currentVertexIndex + i] = data[i];
+        }
+
         _currentVertexIndex += QUAD_VERTEX_COUNT;
 
         for (int i = 0; i < quadIndices.Length; i++)
@@ -271,45 +238,10 @@ public class FlareRenderer : IDisposable
         _currentTriangleIndex += quadIndices.Length;
     }
 
-    private uint[] GenerateQuadIndices(uint startingIndex)
-    {
-        return
-        [
-            startingIndex, startingIndex + 2, startingIndex + 3,
-            startingIndex, startingIndex + 1, startingIndex + 3
-        ];
-    }
+    #endregion
 
-   
 
-    public void DrawImGui()
-    {
-        if (ImGui.Begin("SpriteBatch"))
-        {
-            ImGui.Checkbox("Wire Mode: ", ref DrawWireFrame);
-            if (ImGui.CollapsingHeader("Texture slots"))
-            {
-                int i = 0;
-                foreach (var textureSlot in _textureSlots)
-                {
-                    ImGui.Text($"{i++} - {textureSlot.Id} | {textureSlot.Width}x{textureSlot.Height}");
-                }
-
-                string error = GraphicsDevice.CheckErrors();
-                if (!string.IsNullOrEmpty(error))
-                {
-                    ImGui.Text("OPENGL::ERROR " + error);
-                }
-            }
-
-            if (ImGui.CollapsingHeader("Stats"))
-            {
-                ImGui.Text($"VERTICES: {_currentVertexIndex}");
-                ImGui.Text($"INDICES: {_currentTriangleIndex}");
-            }
-            ImGui.End();
-        }
-    }
+    #region DrawShapes
 
     public void DrawRectangle(Rectangle rectangle, Color color)
     {
@@ -353,6 +285,38 @@ public class FlareRenderer : IDisposable
                 rectangle.Height - thickness * 2), color);
     }
 
+    #endregion
+
+    public void DrawImGui()
+    {
+        if (ImGui.Begin("SpriteBatch"))
+        {
+            ImGui.Checkbox("Wire Mode: ", ref DrawWireFrame);
+            if (ImGui.CollapsingHeader("Texture slots"))
+            {
+                int i = 0;
+                foreach (var textureSlot in _textureSlots)
+                {
+                    ImGui.Text($"{i++} - {textureSlot.Id} | {textureSlot.Width}x{textureSlot.Height}");
+                }
+
+                string error = GraphicsDevice.CheckErrors();
+                if (!string.IsNullOrEmpty(error))
+                {
+                    ImGui.Text("OPENGL::ERROR " + error);
+                }
+            }
+
+            if (ImGui.CollapsingHeader("Stats"))
+            {
+                ImGui.Text($"VERTICES: {_currentVertexIndex}");
+                ImGui.Text($"INDICES: {_currentTriangleIndex}");
+            }
+
+            ImGui.End();
+        }
+    }
+
     public void Dispose()
     {
         GraphicsDevice.DestroyBufferObject(ref _ebo);
@@ -360,6 +324,58 @@ public class FlareRenderer : IDisposable
         GraphicsDevice.DestroyVao(ref _vao);
         GraphicsDevice.DestroyShader(ref _defaultShader);
         GraphicsDevice.DestroyTexture(ref _defaultTexture);
+    }
+
+
+    #region Utils
+
+    private Vector4 ColorToVector4(Color color)
+    {
+        return new Vector4(color.R, color.G, color.B, color.A) / 255f;
+    }
+
+    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color,
+        Vector2 minTexCoords,
+        Vector2 maxTexCoords, int slot, Vector3 normal)
+    {
+        data[0] = new Vertex(position, ColorToVector4(color[0]),
+            new Vector2(minTexCoords.X, maxTexCoords.Y), slot, normal);
+
+        data[1] = new Vertex(position with { X = position.X + size.X }, ColorToVector4(color[1]),
+            new Vector2(maxTexCoords.X, maxTexCoords.Y), slot, normal);
+
+        data[2] = new Vertex(position with { Y = position.Y + size.Y }, ColorToVector4(color[2]),
+            new Vector2(minTexCoords.X, minTexCoords.Y), slot, normal);
+
+        data[3] = new Vertex(position + size.AsVector3(), ColorToVector4(color[3]),
+            new Vector2(maxTexCoords.X, minTexCoords.Y), slot, normal);
+    }
+
+    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color,
+        Vector2 minTexCoords,
+        Vector2 maxTexCoords, int slot)
+    {
+        GenerateQuadVertices(data, position, size, color, minTexCoords, maxTexCoords,
+            slot, new Vector3(0, 0, 1));
+    }
+
+    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color, Vector3 normal)
+    {
+        GenerateQuadVertices(data, position, size, color, Vector2.Zero, Vector2.One, 0, normal);
+    }
+
+    private void GenerateQuadVertices(Span<Vertex> data, Vector3 position, Vector2 size, Color[] color)
+    {
+        GenerateQuadVertices(data, position, size, color, new Vector3(0, 0, 1));
+    }
+
+    private uint[] GenerateQuadIndices(uint startingIndex)
+    {
+        return
+        [
+            startingIndex, startingIndex + 2, startingIndex + 3,
+            startingIndex, startingIndex + 1, startingIndex + 3
+        ];
     }
 
     public void EnsureBounds(int additionalVerticesCount, int additionalIndicesCount)
@@ -390,7 +406,7 @@ public class FlareRenderer : IDisposable
     public void SetTextureUniform(string name, ref Shader shader, ref Texture texture)
     {
         int slot = GetTextureSlot(ref texture);
-        GraphicsDevice.BindTextureToSlot(ref texture, TextureUnit.Texture0+slot);
+        GraphicsDevice.BindTextureToSlot(ref texture, TextureUnit.Texture0 + slot);
         GraphicsDevice.SetShaderUniform(ref _currentShader, name, (TextureUnit)((int)TextureUnit.Texture0 + slot));
     }
 
@@ -411,6 +427,7 @@ public class FlareRenderer : IDisposable
             Texture textureSlot = _textureSlots[i];
             GraphicsDevice.BindTextureToSlot(ref textureSlot, (TextureUnit)((int)TextureUnit.Texture0 + i));
         }
+
         int[] samplers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
         GraphicsDevice.SetShaderUniform(ref _currentShader, "tex", samplers);
     }
@@ -429,8 +446,10 @@ public class FlareRenderer : IDisposable
         {
             Flush();
         }
+
         _textureSlots.Add(texture);
         return _textureSlots.Count - 1;
     }
-    
+
+    #endregion
 }
