@@ -219,11 +219,13 @@ public class FlareRenderer : IDisposable
             [color, color, color, color],
             new Vector2(uMin, vMin),
             new Vector2(uMax, vMax), slot);
+        
         origin *= scale;
         Matrix4x4 transformationMatrix =
-            Matrix4x4.CreateRotationZ(-rotation, position.AsVector3() + origin.AsVector3());
+            Matrix4x4.CreateRotationZ(-rotation, position.AsVector3());
         for (int i = 0; i < QUAD_VERTEX_COUNT; i++)
         {
+            data[i].Position -= origin.AsVector3();
             data[i].Position = Vector3.Transform(data[i].Position, transformationMatrix);
             _vertices[_currentVertexIndex + i] = data[i];
         }
@@ -236,6 +238,83 @@ public class FlareRenderer : IDisposable
         }
 
         _currentTriangleIndex += quadIndices.Length;
+    }
+
+    public void DrawTexture(Texture texture, Vector2 position, Color tintColor)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),new Rectangle(0,0,texture.Width,texture.Height), tintColor,
+        Vector2.Zero,Vector2.One,0,false,false);
+    }
+
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),sourceRect, tintColor,
+            Vector2.Zero,Vector2.One,0,false,false);   
+    }
+
+    public void DrawTexture(Texture texture, Vector2 position, Color tintColor, Vector2 origin, float rotation)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),new Rectangle(0,0,texture.Width,texture.Height), tintColor,
+            origin,Vector2.One,rotation,false,false);    
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor, Vector2 origin,
+        float rotation)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),sourceRect, tintColor,
+            origin,Vector2.One,rotation,false,false);       
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Color tintColor, Vector2 scale)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),new Rectangle(0,0,texture.Width,texture.Height), tintColor,
+            Vector2.Zero,scale,0,false,false);    
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor, Vector2 scale)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),sourceRect, tintColor,
+            Vector2.Zero,scale,0,false,false);       
+    }
+    
+    public void DrawTexture(Texture texture, Vector2 position, Color tintColor, Vector2 scale, Vector2 origin, float rotation)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),new Rectangle(0,0,texture.Width,texture.Height), tintColor,
+            origin,scale,rotation,false,false);    
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor, Vector2 scale,Vector2 origin, float rotation)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),sourceRect, tintColor,origin,scale,rotation,false,false);       
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Color tintColor,bool invertHorizontal,bool invertVertical)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),new Rectangle(0,0,texture.Width,texture.Height), tintColor,
+            Vector2.Zero,Vector2.One,0, invertHorizontal, invertVertical);
+    }
+
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor,bool invertHorizontal,bool invertVertical)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),sourceRect, tintColor,
+            Vector2.Zero,Vector2.One,0,invertHorizontal, invertVertical);   
+    }
+
+    public void DrawTexture(Texture texture, Vector2 position, Color tintColor, Vector2 origin, float rotation,bool invertHorizontal,bool invertVertical)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),new Rectangle(0,0,texture.Width,texture.Height), tintColor,
+            origin,Vector2.One,rotation,invertHorizontal, invertVertical);    
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor, Vector2 origin,
+        float rotation,bool invertHorizontal,bool invertVertical)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),sourceRect, tintColor,
+            origin,Vector2.One,rotation,invertHorizontal,invertVertical);       
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Color tintColor, Vector2 scale,bool invertHorizontal,bool invertVertical)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),new Rectangle(0,0,texture.Width,texture.Height), tintColor,
+            Vector2.Zero,scale,0,invertHorizontal, invertVertical);    
+    }
+    public void DrawTexture(Texture texture, Vector2 position, Rectangle sourceRect, Color tintColor, Vector2 scale,bool invertHorizontal,bool invertVertical)
+    {
+        DrawTexture(texture, new Vector2(position.X, position.Y),sourceRect, tintColor,
+            Vector2.Zero,scale,0,invertHorizontal,invertVertical);       
     }
 
     #endregion

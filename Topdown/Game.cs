@@ -15,14 +15,14 @@ public class Game() : FlareGame(TITLE, WIDTH, HEIGHT)
 
     private Texture _texture;
 
-    private static TextureConfig DefaultTextureConfig = new TextureConfig(GenerateMipmaps: true);
+    private static TextureConfig DefaultTextureConfig = new TextureConfig(GenerateMipmaps: false);
     private FlareRenderer _renderer;
 
     protected override void Initialize()
     {
         _renderer = new FlareRenderer(GraphicsDevice);
         _texture = GraphicsDevice.LoadTexture(
-            "path",
+            "./Resources/Textures/SpriteSheet.png",
             ref DefaultTextureConfig);
     }
 
@@ -44,6 +44,7 @@ public class Game() : FlareGame(TITLE, WIDTH, HEIGHT)
 
         _renderer.Begin();
         _renderer.DrawTexture(_texture,pos,new Rectangle(x,y,width,height),Color.White,origin,scale,rotation,invertHorizontal,invertVertical);
+        _renderer.DrawRectangle(new Rectangle((int)(origin.X-16+pos.X),(int)(origin.Y-16+pos.Y),32,32),Color.Red);
         _renderer.End();
         _renderer.DrawImGui();
         if (ImGui.Begin("DEBUG WINDOW"))
