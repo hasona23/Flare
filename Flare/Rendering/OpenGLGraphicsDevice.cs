@@ -153,7 +153,6 @@ public class OpenGLGraphicsDevice : IGraphicsDevice
     public BufferObject<TDataType> CreateBufferObject<TDataType>(Span<TDataType> data, BufferTargetARB bufferType,
         BufferUsageARB bufferUsage) where TDataType : unmanaged
     {
-        //Getting the handle, and then uploading the data to said handle.
         uint id = _gl.GenBuffer();
         BufferObject<TDataType> bufferObject = new BufferObject<TDataType>(id, bufferType, bufferUsage);
         _gl.BindBuffer(bufferObject.BufferType, bufferObject.Id);
@@ -219,7 +218,6 @@ public class OpenGLGraphicsDevice : IGraphicsDevice
         if(config.GenerateMipmaps)
             _gl.GenerateMipmap(TextureTarget.Texture2D);
         ApplyTextureConfig(ref config);
-       
         return new Texture(id, result.Width, result.Height);
        
     }
@@ -334,7 +332,7 @@ public class OpenGLGraphicsDevice : IGraphicsDevice
         int location = GetShaderUniform(ref shader, name);
         if (location == -1)
             return;
-        _gl.ProgramUniform1(shader.ProgramId, location, (uint)(textureSlot - TextureUnit.Texture0));
+        _gl.ProgramUniform1(shader.ProgramId, location, (textureSlot - TextureUnit.Texture0));
     }
 
     public void SetShaderUniform(ref Shader shader, string name, uint value)

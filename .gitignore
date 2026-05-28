@@ -59,3 +59,5 @@ nunit-*.xml
 #editor
 .vs/
 .idea/
+*.sln.DotSettings
+*.sln.DotSettings.user

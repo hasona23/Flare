@@ -33,7 +33,7 @@ public class FlareRenderer : IDisposable
     private Shader _defaultShader;
     private Shader _currentShader;
     private Texture _defaultTexture;
-    private Texture _currentTexture;
+    //private Texture _currentTexture;
     private readonly List<Texture> _textureSlots = new List<Texture>(MAX_TEXTURE_SLOTS);
 
     #endregion
@@ -44,7 +44,7 @@ public class FlareRenderer : IDisposable
     private const int QUAD_VERTEX_COUNT = 4;
     private const int QUAD_INDICES_COUNT = 6;
 
-    private const string DEFAULT_V_SHADER = @"
+    public const string DEFAULT_V_SHADER = @"
     #version 330 core
     layout (location=0) in vec3 position;
     layout (location=1) in vec4 color;
@@ -69,7 +69,7 @@ public class FlareRenderer : IDisposable
         frag_texId = texId;
     }";
 
-    private const string DEFAULT_F_SHADER = @"
+    public const string DEFAULT_F_SHADER = @"
     #version 330 core
     in vec3 frag_position;
     in vec4 frag_color;
@@ -160,6 +160,7 @@ public class FlareRenderer : IDisposable
     {
         Flush();
         ChangeShader(ref shader);
+        GraphicsDevice.SetShaderUniform(ref shader, "transform", DefaultTransform);
     }
 
     public void EndShader()
@@ -171,13 +172,13 @@ public class FlareRenderer : IDisposable
     public void BeginTransform(Matrix4x4 matrix)
     {
         Flush();
-        GraphicsDevice.SetShaderUniform(ref _defaultShader, "transform", matrix * DefaultTransform);
+        GraphicsDevice.SetShaderUniform(ref _currentShader, "transform", matrix * DefaultTransform);
     }
 
     public void EndTransform()
     {
         Flush();
-        GraphicsDevice.SetShaderUniform(ref _defaultShader, "transform", DefaultTransform);
+        GraphicsDevice.SetShaderUniform(ref _currentShader, "transform", DefaultTransform);
     }
 
     #endregion
@@ -322,6 +323,46 @@ public class FlareRenderer : IDisposable
 
     #region DrawShapes
 
+    public void DrawTriangle(Vector2 point1, Vector2 point2, Vector2 point3, Color color)
+    {
+        int startingIndex = _currentVertexIndex;
+        _vertices[_currentVertexIndex] = new Vertex(point1.AsVector3(),ColorToVector4(color));
+        _vertices[_currentVertexIndex + 1] = new Vertex(point2.AsVector3(),ColorToVector4(color));
+        _vertices[_currentVertexIndex + 2] = new Vertex(point3.AsVector3(),ColorToVector4(color));
+        _currentVertexIndex += 3;
+        for (int i = 0; i < 3; i++)
+        {
+            _indices[_currentTriangleIndex + i] = (uint)startingIndex + (uint)i;
+        }
+
+        _currentTriangleIndex += 3;
+    }
+    public void DrawLine(Vector2 start, Vector2 end, Color color, float thickness)
+    {
+        Vector2 lineVector = end - start;
+        if(lineVector.LengthSquared() > 0)
+            lineVector = Vector2.Normalize(lineVector);
+        
+        Vector2 perpendicularLine = new Vector2(-lineVector.Y, lineVector.X);
+
+        Span<Vector2> points = stackalloc Vector2[4];
+       
+        points[0] = new Vector2(start.X+perpendicularLine.X,start.Y+perpendicularLine.Y);
+        points[1] = new Vector2(start.X - perpendicularLine.X, start.Y - perpendicularLine.Y);
+        points[2] = new Vector2(end.X + perpendicularLine.X,end.Y + perpendicularLine.Y);
+        points[3] = new Vector2(end.X - perpendicularLine.X,end.Y - perpendicularLine.Y);
+        
+        uint startIndex = (uint)_currentVertexIndex;
+        uint[] quadIndices = GenerateQuadIndices(startIndex);
+        for (var i = 0; i < points.Length; i++)
+        {
+            _vertices[_currentVertexIndex+i] = new Vertex(points[i].AsVector3(), ColorToVector4(color));
+        }
+        _currentVertexIndex += QUAD_VERTEX_COUNT;
+        for(int i = 0; i< quadIndices.Length; i++)
+            _indices[_currentTriangleIndex+i] = quadIndices[i];
+        _currentTriangleIndex += quadIndices.Length;
+    }
     public void DrawRectangle(Rectangle rectangle, Color color)
     {
         EnsureBounds(QUAD_VERTEX_COUNT, QUAD_INDICES_COUNT);
@@ -484,18 +525,17 @@ public class FlareRenderer : IDisposable
 
     public void SetTextureUniform(string name, ref Shader shader, ref Texture texture)
     {
-        int slot = GetTextureSlot(ref texture);
-        GraphicsDevice.BindTextureToSlot(ref texture, TextureUnit.Texture0 + slot);
-        GraphicsDevice.SetShaderUniform(ref _currentShader, name, (TextureUnit)((int)TextureUnit.Texture0 + slot));
+        //int slot = GetTextureSlot(ref texture);
+        GraphicsDevice.BindTextureToSlot(ref texture, TextureUnit.Texture17);
+        GraphicsDevice.SetShaderUniform(ref shader, name, TextureUnit.Texture17);
     }
 
     public void SetTextureUniform(string name, ref Shader shader, Texture[] textures)
     {
         for (int i = 0; i < textures.Length; i++)
         {
-            int slot = GetTextureSlot(ref textures[i]);
-            GraphicsDevice.BindTextureToSlot(ref textures[i], TextureUnit.Texture0 + slot);
-            GraphicsDevice.SetShaderUniform(ref _currentShader, name, TextureUnit.Texture0 + slot);
+            GraphicsDevice.BindTextureToSlot(ref textures[i], TextureUnit.Texture17 + i);
+            GraphicsDevice.SetShaderUniform(ref _currentShader, name, TextureUnit.Texture17 + i);
         }
     }
 
