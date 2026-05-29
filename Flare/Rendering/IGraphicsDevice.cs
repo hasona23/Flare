@@ -37,7 +37,7 @@ public interface IGraphicsDevice : IDisposable
         where TDataType : unmanaged;
 
 
-    public Texture CreateTexture(int width, int height,Span<byte> data, ref TextureConfig config);
+    public Texture CreateTexture(int width, int height,string name,Span<byte> data, ref TextureConfig config);
     public Texture LoadTexture(string path, ref TextureConfig config);
     public void BindTextureToSlot(ref Texture texture, TextureUnit slot);
     public void DestroyTexture(ref Texture texture);

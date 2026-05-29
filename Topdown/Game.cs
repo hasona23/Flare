@@ -7,7 +7,7 @@ using Texture = Flare.Rendering.Texture;
 
 namespace Topdown;
 
-public class Game() : FlareGame(TITLE, WIDTH, HEIGHT)
+public class Game() : FlareCore(TITLE, WIDTH, HEIGHT)
 {
     public const string TITLE = "Topdown";
     public const int WIDTH = 1280;
@@ -80,6 +80,7 @@ void main()
         _renderer.DrawTexture(_texture,_pos,new Rectangle(_x,_y,_width,_height),Color.White,_origin,_scale,_rotation,_invertHorizontal,_invertVertical);
         if(_useShader)
             _renderer.EndShader();
+        _renderer.DrawTexture(Circle,new Vector2(200,100),Color.Red,new Vector2(3,3));
         _renderer.DrawRectangle(new Rectangle((int)(_origin.X-16+_pos.X),(int)(_origin.Y-16+_pos.Y),32,32),Color.Red);
         _renderer.End();
         _renderer.DrawImGui();

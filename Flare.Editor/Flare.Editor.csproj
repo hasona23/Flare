@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <RollForward>Major</RollForward>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <TieredCompilation>false</TieredCompilation>
+        <RootNamespace>Flare.Editor</RootNamespace>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Flare\Flare.csproj" />
+    </ItemGroup>
+</Project>

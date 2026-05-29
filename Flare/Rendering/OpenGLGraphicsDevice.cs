@@ -184,7 +184,7 @@ public class OpenGLGraphicsDevice : IGraphicsDevice
     
     #endregion
     #region Textures
-    public Texture CreateTexture(int width, int height, Span<byte> data,ref TextureConfig config)
+    public Texture CreateTexture(int width, int height,string name, Span<byte> data,ref TextureConfig config)
     {
         uint id = _gl.GenTexture();
         _gl.ActiveTexture(TextureUnit.Texture0);
@@ -199,7 +199,7 @@ public class OpenGLGraphicsDevice : IGraphicsDevice
         if(config.GenerateMipmaps)
             _gl.GenerateMipmap(TextureTarget.Texture2D);
         ApplyTextureConfig(ref config);
-        return new Texture(id, width, height);
+        return new Texture(id, width, height,name);
     }
 
     public Texture LoadTexture(string path,ref TextureConfig config)
@@ -218,7 +218,7 @@ public class OpenGLGraphicsDevice : IGraphicsDevice
         if(config.GenerateMipmaps)
             _gl.GenerateMipmap(TextureTarget.Texture2D);
         ApplyTextureConfig(ref config);
-        return new Texture(id, result.Width, result.Height);
+        return new Texture(id, result.Width, result.Height,Path.GetFileNameWithoutExtension(path));
        
     }
     public void BindTextureToSlot(ref Texture texture, TextureUnit slot)

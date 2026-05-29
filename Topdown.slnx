@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="Flare.Editor/Flare.Editor.csproj" />
   <Project Path="Flare/Flare.csproj" />
   <Project Path="Topdown/Topdown.csproj" />
 </Solution>

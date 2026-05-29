@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using Silk.NET.Input;
-using Silk.NET.Windowing;
 using System.Numerics;
 namespace Flare;
 

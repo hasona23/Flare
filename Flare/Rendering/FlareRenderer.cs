@@ -109,7 +109,7 @@ public class FlareRenderer : IDisposable
 
 
         TextureConfig defaultTextureConfig = new TextureConfig();
-        _defaultTexture = GraphicsDevice.CreateTexture(1, 1, [255, 255, 255, 255], ref defaultTextureConfig);
+        _defaultTexture = GraphicsDevice.CreateTexture(1, 1, "Pixel",[255, 255, 255, 255], ref defaultTextureConfig);
 
         _textureSlots.Add(_defaultTexture);
 
