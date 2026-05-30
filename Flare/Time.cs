@@ -8,16 +8,16 @@ public static class Time
     public static float Ups { get; private set; }
     public static float TimeScale { get; set; } = 1;
    
-    internal static void UpdateUps(float deltaTime)
+    internal static void UpdateUps(double deltaTime)
     {
-        UnScaledDeltaTime = deltaTime;
+        UnScaledDeltaTime = (float)deltaTime;
         DeltaTime = UnScaledDeltaTime * TimeScale;
         Ups = 1/UnScaledDeltaTime;
     }
 
-    internal static void UpdateFps(float deltaTime)
+    internal static void UpdateFps(double deltaTime)
     {
-        Fps = deltaTime;
+        Fps = (float)deltaTime;
         Fps = 1 / Fps;
     }
 }

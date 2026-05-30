@@ -175,11 +175,12 @@ public class ParticleSystem : IParticleSystem, IDisposable
                 // right and left randomness
                 velocity.X = (Random.Shared.NextSingle() - .5f) * 2 / 3;
                 break;
+            //BUG: Inward behaves like outward need to set the ending point at center
             case SpawnDirections.Inward:
-                velocity = Settings.Bounds.Location.ToVector2() + Settings.Bounds.Size.ToVector2()/2f - particlePos;
+                velocity = (Settings.Bounds.Location.ToVector2() + Settings.Bounds.Size.ToVector2() / 2f) - particlePos;
                 break;
             case SpawnDirections.Outward:
-                velocity = particlePos - Settings.Bounds.Location.ToVector2() + Settings.Bounds.Size.ToVector2()/2f;
+                velocity = particlePos - (Settings.Bounds.Location.ToVector2() + Settings.Bounds.Size.ToVector2() / 2f);
                 break;
         }
 

@@ -9,15 +9,15 @@ namespace Flare.Editor;
 
 public class Game() : FlareCore(TITLE,WIDTH,HEIGHT)
 {
-    public const int WIDTH = 480;
-    public const int HEIGHT = 270;
+    public const int WIDTH = 1280;
+    public const int HEIGHT = 720;
     public const string TITLE = "Editor";
     private string _currentEditor = "";
     private readonly Dictionary<string, IEditor> _editors = new();
     private List<string> _editorNames = new();
     private int _resolutionXBuffer, _resolutionYBuffer;
     private bool _isResizingWindowOpen;
-    private readonly FlareRenderer _renderer = null!;
+    private FlareRenderer _renderer = null!;
    
 
     private void GetAllEditors()
@@ -44,6 +44,7 @@ public class Game() : FlareCore(TITLE,WIDTH,HEIGHT)
         _editorNames = _editors.Keys.ToList();
         _currentEditor = "ParticleEditor";
         (_resolutionXBuffer, _resolutionYBuffer) = (WIDTH, HEIGHT);
+        _renderer = new FlareRenderer(GraphicsDevice);
     }
 
     protected override void Update(double deltaTime)

@@ -105,6 +105,7 @@ public abstract class FlareCore : IDisposable
     {
         if (ExitOnEscape && Input.IsKeyDown(Key.Escape))
             Window.Close();
+        Time.UpdateUps(deltaTime);
         Update(deltaTime);
         //INPUT UPDATE CLEARS THE INPUT BUFFERS FOR PRESSED/RELEASED THUS MUST BE ALWAYS CALLED AT END OF LOOP
         Input.Update(deltaTime);
@@ -113,6 +114,7 @@ public abstract class FlareCore : IDisposable
 
     private void FlareRender(double deltaTime)
     {
+        Time.UpdateFps(deltaTime);
         Render(deltaTime);
         ImGuiController.Render();
     }

@@ -23,8 +23,6 @@
       <ProjectReference Include="..\Flare\Flare.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Resources\Textures\" />
-    </ItemGroup>
+   
 
 </Project>
